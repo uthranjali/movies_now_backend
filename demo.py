@@ -1,15 +1,15 @@
 
-from flask import Flask, request, jsonify, Response,render_template
+from flask import Flask, request, jsonify, Response,render_template, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+import json
 
 
 
 
+app = Flask(__name__)
 
-app = Flask(__name__,template_folder='template')
-
-app.config['SQLALCHEMY_DATABASE_URI']='mysql+pymysql://root:Artra0827@localhost:3306/flaskapp'
+app.config['SQLALCHEMY_DATABASE_URI']='mysql+pymysql://root:@localhost:3306/flaskapp'
 CORS(app)
 db = SQLAlchemy(app)
 
@@ -38,7 +38,7 @@ class Movie(db.Model):
         db_data = db.session.add(new_movie)
         print(db_data)  # add new movie to database session
         db.session.commit()  # commit changes to session
-        return get_movie_by_id(new_movie.id)
+        return new_movie.id
 
     def get_all_movies():
         '''function to get all movies in our database'''
@@ -93,10 +93,16 @@ def get_movie_by_id(id):
 def add_movie():
     '''Function to add new movie to our database'''
     request_data = request.get_json()  # getting data from client
-    data = Movie.add_movie(request_data["title"], request_data["year"],
+    movie_id = Movie.add_movie(request_data["title"], request_data["year"],
                     request_data["genre"])
-
-    return data
+    data = Movie.get_movie(movie_id)
+    result = {
+        "status": "success",
+        "code": 201,
+        "results": data,
+        "msg": "Added Successfully"
+    }
+    return jsonify(result)
 # route to update movie with PUT method
 @app.route('/movies/<int:id>', methods=['PUT'])
 def update_movie(id):
